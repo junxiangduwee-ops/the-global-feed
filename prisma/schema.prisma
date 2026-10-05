@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // For Supabase: use the pooled URL as DATABASE_URL, direct URL here
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  HEAD_OF_DEPARTMENT
+  SENIOR_MANAGER
+  MANAGER
+  ASSISTANT_MANAGER
+  SENIOR_EXECUTIVE
+}
+
+enum ReleaseStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  DECLINED
+  TRANSLATING
+  PUBLISHED
+}
+
+enum ReleaseType {
+  STORE_OPENING
+  MILESTONE
+  CSR
+  AWARD
+  CAMPAIGN
+  PRODUCT_LAUNCH
+  PARTNERSHIP
+  ANNOUNCEMENT
+  OTHER
+}
+
+enum TranslationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String
+  password    String
+  role        UserRole  @default(SENIOR_EXECUTIVE)
+  department  String?
+  country     String    @default("MY")
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  releases    Release[] @relation("SubmittedBy")
+  reviews     Release[] @relation("ReviewedBy")
+  activityLog ActivityLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Release {
+  id              String        @id @default(cuid())
+  title           String
+  body            String
+  excerpt         String?
+  releaseType     ReleaseType   @default(ANNOUNCEMENT)
+  originLanguage  String        @default("en")
+  originCountry   String        @default("MY")
+  status          ReleaseStatus @default(DRAFT)
+  score           Int?
+
+  submittedById   String
+  submittedBy     User          @relation("SubmittedBy", fields: [submittedById], references: [id])
+
+  reviewedById    String?
+  reviewedBy      User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  reviewNote      String?
+
+  n8nJobId        String?
+  n8nSentAt       DateTime?
+
+  publishAt       DateTime?
+  publishedAt     DateTime?
+
+  tags            String[]      @default([])
+
+  translations    ReleaseTranslation[]
+  activityLog     ActivityLog[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([submittedById])
+  @@index([createdAt(sort: Desc)])
+}
+
+model ReleaseTranslation {
+  id           String            @id @default(cuid())
+  releaseId    String
+  release      Release           @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  language     String
+  country      String
+  title        String
+  body         String
+  excerpt      String?
+
+  status       TranslationStatus @default(PENDING)
+  translatedAt DateTime?
+  translator   String            @default("n8n-ai")
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  isApproved   Boolean           @default(false)
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([releaseId, language, country])
+  @@index([releaseId])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  releaseId  String?
+  release    Release? @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  action     String
+  meta       String   @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([releaseId])
+  @@index([actorId])
+}
