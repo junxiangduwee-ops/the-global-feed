@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
-import { canApprove } from "@/lib/types";
+import { NextResponse }         from "next/server";
+import { assertCapability }     from "@/lib/session";
+import { prisma }               from "@/lib/prisma";
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!canApprove(session.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let session;
+  try {
+    session = await assertCapability("releases:approve");
+  } catch (e) {
+    return e as Response;
+  }
 
   await prisma.release.update({
     where: { id: params.id, status: "PENDING" },

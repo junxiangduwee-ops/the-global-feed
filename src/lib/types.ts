@@ -1,3 +1,5 @@
+// ─── Core domain types ────────────────────────────────────────────────────────
+
 export type UserRole =
   | "HEAD_OF_DEPARTMENT"
   | "SENIOR_MANAGER"
@@ -12,6 +14,8 @@ export type ReleaseType =
   | "STORE_OPENING" | "MILESTONE" | "CSR" | "AWARD" | "CAMPAIGN"
   | "PRODUCT_LAUNCH" | "PARTNERSHIP" | "ANNOUNCEMENT" | "OTHER";
 
+// ─── Display labels ───────────────────────────────────────────────────────────
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   HEAD_OF_DEPARTMENT: "Head of Department",
   SENIOR_MANAGER:     "Senior Manager",
@@ -19,22 +23,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ASSISTANT_MANAGER:  "Assistant Manager",
   SENIOR_EXECUTIVE:   "Senior Executive",
 };
-
-export const ROLE_LEVEL: Record<UserRole, number> = {
-  HEAD_OF_DEPARTMENT: 5,
-  SENIOR_MANAGER:     4,
-  MANAGER:            3,
-  ASSISTANT_MANAGER:  2,
-  SENIOR_EXECUTIVE:   1,
-};
-
-export function canPublishDirectly(role: string): boolean {
-  return ["HEAD_OF_DEPARTMENT", "SENIOR_MANAGER", "MANAGER"].includes(role);
-}
-
-export function canApprove(role: string): boolean {
-  return role === "HEAD_OF_DEPARTMENT";
-}
 
 export const RELEASE_TYPE_LABELS: Record<ReleaseType, string> = {
   STORE_OPENING:  "Store Opening",
@@ -48,7 +36,10 @@ export const RELEASE_TYPE_LABELS: Record<ReleaseType, string> = {
   OTHER:          "Other",
 };
 
-export const STATUS_CONFIG: Record<ReleaseStatus, { label: string; color: string; bg: string; border: string }> = {
+export const STATUS_CONFIG: Record<
+  ReleaseStatus,
+  { label: string; color: string; bg: string; border: string }
+> = {
   DRAFT:       { label: "Draft",       color: "#94a3b8", bg: "#1e293b", border: "#334155" },
   PENDING:     { label: "Pending",     color: "#93c5fd", bg: "#1c2333", border: "#1d4ed8" },
   APPROVED:    { label: "Approved",    color: "#86efac", bg: "#052e16", border: "#166534" },
@@ -56,6 +47,42 @@ export const STATUS_CONFIG: Record<ReleaseStatus, { label: string; color: string
   TRANSLATING: { label: "Translating", color: "#fde68a", bg: "#1c1a00", border: "#92400e" },
   PUBLISHED:   { label: "Published",   color: "#67e8f9", bg: "#0c1a2e", border: "#0e7490" },
 };
+
+// ─── RBAC re-exports (prefer importing directly from @/lib/rbac in new code) ──
+// These are kept so existing imports don't break during the transition.
+
+export {
+  can,
+  canAny,
+  ROLE_LEVEL,
+  canAssignRole,
+  canEditUser,
+  canToggleUser,
+  ROLE_LABEL as ROLE_LABELS_RBAC,
+} from "@/lib/rbac";
+
+import { can } from "@/lib/rbac";
+
+/**
+ * Legacy shim — kept so DraftForm.tsx compiles without changes.
+ * New code should use: can(role, "releases:publish")
+ */
+export function canPublishDirectly(role: string): boolean {
+  return can(role, "releases:publish");
+}
+
+/**
+ * Legacy shim — kept so old approvals page compiles without changes.
+ * New code should use: can(role, "releases:approve")
+ */
+export function canApprove(role: string): boolean {
+  return can(role, "releases:approve");
+}
+
+/** Roles with user-management access */
+export const ADMIN_ROLES: UserRole[] = ["HEAD_OF_DEPARTMENT", "SENIOR_MANAGER"];
+
+// ─── Static data ──────────────────────────────────────────────────────────────
 
 export const LANGUAGES = [
   { code: "en",    label: "English" },
@@ -75,21 +102,21 @@ export const LANGUAGES = [
 ];
 
 export const COUNTRIES = [
-  { code: "MY", label: "Malaysia" },
-  { code: "TH", label: "Thailand" },
-  { code: "ID", label: "Indonesia" },
-  { code: "VN", label: "Vietnam" },
-  { code: "PH", label: "Philippines" },
-  { code: "SG", label: "Singapore" },
-  { code: "BN", label: "Brunei" },
-  { code: "MM", label: "Myanmar" },
-  { code: "CN", label: "China" },
-  { code: "JP", label: "Japan" },
-  { code: "KR", label: "South Korea" },
-  { code: "IN", label: "India" },
-  { code: "AE", label: "UAE" },
-  { code: "GB", label: "United Kingdom" },
-  { code: "US", label: "United States" },
-  { code: "AU", label: "Australia" },
+  { code: "MY",    label: "Malaysia" },
+  { code: "TH",    label: "Thailand" },
+  { code: "ID",    label: "Indonesia" },
+  { code: "VN",    label: "Vietnam" },
+  { code: "PH",    label: "Philippines" },
+  { code: "SG",    label: "Singapore" },
+  { code: "BN",    label: "Brunei" },
+  { code: "MM",    label: "Myanmar" },
+  { code: "CN",    label: "China" },
+  { code: "JP",    label: "Japan" },
+  { code: "KR",    label: "South Korea" },
+  { code: "IN",    label: "India" },
+  { code: "AE",    label: "UAE" },
+  { code: "GB",    label: "United Kingdom" },
+  { code: "US",    label: "United States" },
+  { code: "AU",    label: "Australia" },
   { code: "OTHER", label: "Other" },
 ];

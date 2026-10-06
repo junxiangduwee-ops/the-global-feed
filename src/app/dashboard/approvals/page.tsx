@@ -4,14 +4,15 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
 import { formatRelative } from "@/lib/utils";
-import { canApprove, ROLE_LABELS, RELEASE_TYPE_LABELS, type UserRole, type ReleaseType } from "@/lib/types";
+import { ROLE_LABELS, RELEASE_TYPE_LABELS, type UserRole, type ReleaseType } from "@/lib/types";
+import { can } from "@/lib/rbac";
 
 export const metadata = { title: "Approvals" };
 
 export default async function ApprovalsPage() {
   const session = await getSession();
   if (!session) redirect("/auth/login");
-  if (!canApprove(session.role)) redirect("/dashboard");
+  if (!can(session.role, "releases:approve")) redirect("/dashboard");
 
   const pending = await prisma.release.findMany({
     where:   { status: "PENDING" },

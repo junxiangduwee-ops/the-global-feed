@@ -6,7 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { formatDate, formatRelative } from "@/lib/utils";
 import { StatusBadge } from "@/components/releases/StatusBadge";
 import { ApproveDeclineBar } from "@/components/releases/ApproveDeclineBar";
-import { canApprove, ROLE_LABELS, RELEASE_TYPE_LABELS, LANGUAGES, type UserRole, type ReleaseType } from "@/lib/types";
+import { ROLE_LABELS, RELEASE_TYPE_LABELS, LANGUAGES, type UserRole, type ReleaseType } from "@/lib/types";
+import { can } from "@/lib/rbac";
 
 export default async function ReleaseDetailPage({ params }: { params: { id: string } }) {
   const session = await getSession();
@@ -70,7 +71,7 @@ export default async function ReleaseDetailPage({ params }: { params: { id: stri
         )}
       </div>
 
-      {canApprove(session.role) && release.status === "PENDING" && (
+      {can(session.role, "releases:approve") && release.status === "PENDING" && (
         <ApproveDeclineBar releaseId={release.id} />
       )}
 

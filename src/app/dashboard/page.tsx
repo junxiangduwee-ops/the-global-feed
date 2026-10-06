@@ -5,7 +5,8 @@ import Link from "next/link";
 import { FileText, Clock, CheckCircle, Globe, PlusCircle, ArrowRight } from "lucide-react";
 import { formatRelative, countryFlag } from "@/lib/utils";
 import { StatusBadge } from "@/components/releases/StatusBadge";
-import { canApprove, ROLE_LABELS, type UserRole, RELEASE_TYPE_LABELS, type ReleaseType } from "@/lib/types";
+import { ROLE_LABELS, type UserRole, RELEASE_TYPE_LABELS, type ReleaseType } from "@/lib/types";
+import { can } from "@/lib/rbac";
 
 export const metadata = { title: "Dashboard" };
 
@@ -66,7 +67,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {canApprove(session.role) && pending > 0 && (
+      {can(session.role, "releases:approve") && pending > 0 && (
         <div className="card p-4 border-yellow-800/50 bg-yellow-950/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Clock size={18} className="text-yellow-400 flex-shrink-0" />

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Save, Send, Loader2, Tag, X } from "lucide-react";
-import { canPublishDirectly, LANGUAGES, COUNTRIES, RELEASE_TYPE_LABELS } from "@/lib/types";
+import { LANGUAGES, COUNTRIES, RELEASE_TYPE_LABELS } from "@/lib/types";
+import { can } from "@/lib/rbac";
 import type { SessionUser } from "@/lib/session";
 
 const TYPES = Object.entries(RELEASE_TYPE_LABELS);
@@ -53,7 +54,7 @@ export function DraftForm({ session, initial }: Props) {
     if (!res.ok) {
       toast.error(json.error ?? "Failed to save");
     } else {
-      const direct = canPublishDirectly(session.role);
+      const direct = can(session.role, "releases:publish");
       if (status === "DRAFT") toast.success("Draft saved");
       else toast.success(direct ? "Submitted" : "Submitted for HOD review");
       router.push(`/dashboard/releases/${json.id ?? initial?.id}`);
@@ -62,7 +63,7 @@ export function DraftForm({ session, initial }: Props) {
     setSaving(false); setSubmitting(false);
   }
 
-  const submitStatus = canPublishDirectly(session.role) ? "APPROVED" : "PENDING";
+  const submitStatus = can(session.role, "releases:publish") ? "APPROVED" : "PENDING";
 
   return (
     <div className="space-y-5">
@@ -132,7 +133,7 @@ export function DraftForm({ session, initial }: Props) {
       </div>
 
       <div className="px-1">
-        {canPublishDirectly(session.role)
+        {can(session.role, "releases:publish")
           ? <p className="text-xs text-emerald-400">✓ Your role can submit directly — no HOD approval required.</p>
           : <p className="text-xs text-[#64748b]">Submitting will send this release to your HOD for approval.</p>
         }
@@ -146,7 +147,7 @@ export function DraftForm({ session, initial }: Props) {
         <button onClick={() => save(submitStatus)} disabled={saving || submitting}
           className="btn-primary flex items-center gap-2">
           {submitting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-          {canPublishDirectly(session.role) ? "Submit" : "Submit for review"}
+          {can(session.role, "releases:publish") ? "Submit" : "Submit for review"}
         </button>
       </div>
     </div>
